@@ -1,5 +1,5 @@
 
-# Nag-killer & Eu-Summon-Unlock V2.3 for LilyGO/T-2Can
+# Nag-killer & EU-Unlock V2.3 for LilyGO/T-2Can  
 
 > ⚠️ Research / educational firmware only.
 >
@@ -10,7 +10,7 @@
 - Added a toogle in dashboard to enable TLSSC where it is not available.
 
 ---------------------------------------
-- bypass R79 EU restriction in Autopilot.  
+- bypass R79 EU restriction in Autopilot & summon  
 - expanded lateral acceleration limits  
 - lane changes near forks isn't disabled (EAP)  
 - instantaneous lane change on blinker (EAP)  
