@@ -56,6 +56,12 @@ https://github.com/autowp/arduino-mcp2515
 - Open 192.168.4.1 in a browser.  
 - Use the tabs to switch between Nag Echo and Summon Unlock.  
 
+## Build firmware using arduino IDE for OTA
+- Open Sketch > Export Compiled Binary.
+- Open /T2CAN_Unified/build/ folder
+- Upload T2CAN_Unified.ino.bin (924Ko) using the web dashboard & Update
+---  
+
 ## Discord server: 
 https://discord.gg/euPbYG8Npc
 
