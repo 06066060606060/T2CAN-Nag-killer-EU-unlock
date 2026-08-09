@@ -7,7 +7,7 @@
 ---
 
 ## What V2.3 Update Changes
-- Added a toogle in dashboard to enable TLSSC where it is not available.
+- Added a toogle in dashboard to enable TLSSC where it is not available.  
 --------------------Update 2.2-------------------
 - bypass R79 EU restriction in AP
 - Expend summon to +/-  85m
