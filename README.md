@@ -8,15 +8,16 @@
 
 ## What V2.3 Update Changes
 - Added a toogle in dashboard to enable TLSSC where it is not available.
-
----------------------------------------
-- bypass R79 EU restriction in Autopilot & summon  
-- expanded lateral acceleration limits  
-- lane changes near forks isn't disabled (EAP)  
-- instantaneous lane change on blinker (EAP)  
-- no lane change timeout once initiated (EAP)*  
-- takes forks and exits automatically (EAP)  
-- Continue on Green with Car in Front
+--------------------Update 2.2-------------------
+- bypass R79 EU restriction in AP
+- Expend summon to +/-  85m
+- expanded lateral acceleration limits
+- lane changes near forks isn't disabled (EAP)
+- instantaneous lane change on blinker (EAP)
+- no lane change timeout once initiated (EAP)
+- takes forks and exits automatically (EAP)
+- Continue on Green with Car in Front (EAP)
+- OTA Update
 
 ## Hardware Target
 
