@@ -7,7 +7,7 @@
 ---
 
 ## What V2.3b Update Changes
-- Added 2 toggle in dashboard to enable TLSSC for banned car.
+- Added 2 toggle in dashboard to enable TLSSC for banned car.(this will trigger an MCU reboot...)
 - you don't need to activate GTW Config Replay...
 - 
 --------------------Update 2.2-------------------
