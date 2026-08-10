@@ -13,7 +13,8 @@ Some CAN frames are not present on the chassis/Party BUS and must be retrieved f
 |-----------------|----------------|--------------------------|----------------------------------------|       
 | `Parked`        | CAN 280 / 390  | Gear == P                | Party CAN(pin 2/3)                     |  
 | `Summoning`     | CAN 280 + 1016 | `ACA == 1` AND `SPR ≠ 0` | Party CAN (pin 2/3)                    |  
-| `gateAPActive ` | CAN 921        | status == 3 ,4 ,5 ,6     | Body/VH CAN  (pin 9/10)                |  
+| `gateAPActive ` | CAN 921        | status == 3 ,4 ,5 ,6     | Party CAN (pin 2/3)                    | 
+| `autopilot    ` | CAN 1021       |                          | Body/Vh CAN (pin 9/10)                 |
 
 ## What V2.3 Update Changes
 - Added a toggle in dashboard to enable TLSSC where it is not available.
