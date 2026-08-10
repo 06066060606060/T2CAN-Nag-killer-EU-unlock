@@ -30,9 +30,6 @@ Some CAN frames are not present on the chassis/Party BUS and must be retrieved f
 - Continue on Green with Car in Front (EAP)
 - OTA Update
 
-## Branch for banned car
-- https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/ban
-
 ## Hardware Target
 
 This fork was adapted for:
@@ -61,7 +58,7 @@ https://github.com/autowp/arduino-mcp2515
 
 ## Wiring
 - CAN A (MCP2515): connect to the Party CAN bus - X179(2-3)
-- CAN B (TWAI): connect to the Chassis CAN bus -  X179(9-10)
+- CAN B (TWAI): connect to the Body/Vehicule CAN bus -  X179(9-10)
 
 ## Dashboard Notes
 
