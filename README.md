@@ -20,6 +20,9 @@
 - Continue on Green with Car in Front (EAP)
 - OTA Update
 
+## Branch for banned car
+- https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/ban
+
 ## Hardware Target
 
 This fork was adapted for:
