@@ -1,10 +1,19 @@
 
-# Nag-killer & EU-Unlock V2.3 for LilyGO/T-2Can  
+# Nag-killer & EU-Unlock V2.3-BETA for LilyGO/T-2Can Model YL version
 
 > ⚠️ Research / educational firmware only.
 >
 > This project interacts with a vehicle CAN bus. It is intended for controlled bench testing, code review, and research environments only.It sends signals directly to the controller, not a physical command to the steering wheel. Do not use this on public roads or in any situation where unsafe behavior could put people or property at risk. You are responsible for your own testing, wiring, configuration, and local laws.
 ---
+
+## distinctive feature of the Tesla Model YL (after March, 2026)
+Some CAN frames are not present on the chassis/Party BUS and must be retrieved from Body/VH BUS
+
+| Flag            | Source         | Condition                | Model YL bus                           |  
+|-----------------|----------------|--------------------------|----------------------------------------|       
+| `Parked`        | CAN 280 / 390  | Gear == P                | Party CAN(pin 2/3)                     |  
+| `Summoning`     | CAN 280 + 1016 | `ACA == 1` AND `SPR ≠ 0` | Party CAN (pin 2/3)                    |  
+| `gateAPActive ` | CAN 921        | status == 3 ,4 ,5 ,6     | Body/VH CAN  (pin 9/10)                |  
 
 ## What V2.3 Update Changes
 - Added a toggle in dashboard to enable TLSSC where it is not available.
@@ -27,10 +36,10 @@
 
 This fork was adapted for:
 
-| Device                       | Can Transceiver                 | CAN RX / CAN TX   | Can Bus      | Power                     |
-| ---------------------------- | ------------------------------- | ----------------- | ------------ | ------------------------- |
-| LilyGO/T-2Can                |CAN A Party CAN → Nag Killer     |                   |              |                           |
-|                              |CAN B Chassis CAN → Summon Unlock|                   | 500 kbps CAN | USB-C or stable 12V supply|
+| Device                       | Can Transceiver                         | CAN RX / CAN TX   | Can Bus      | Power                     |
+| ---------------------------- | --------------------------------------- | ----------------- | ------------ | ------------------------- |
+| LilyGO/T-2Can                |CAN A Party CAN → Nag Killer & EU Unlock |                   |              |                           |
+|                              |CAN B Body/VH CAN → EU Unlock            |                   | 500 kbps CAN | USB-C or stable 12V supply|
 
 
 
@@ -50,8 +59,8 @@ https://github.com/autowp/arduino-mcp2515
 - pin_config.h  
 
 ## Wiring
-- CAN A (MCP2515): connect to the Party CAN bus - Nag Killer (2-3)
-- CAN B (TWAI): connect to the Chassis CAN bus - Summon Unlock (13-14)
+- CAN A (MCP2515): connect to the Party CAN bus - X179(2-3)
+- CAN B (TWAI): connect to the Chassis CAN bus -  X179(9-10)
 
 ## Dashboard Notes
 
