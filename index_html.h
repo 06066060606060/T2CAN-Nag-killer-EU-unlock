@@ -502,14 +502,13 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
     <h2>Frames CAN <span class="iface-note">Model YL routing</span></h2>
     <div class="desc" style="margin-top:0;margin-bottom:12px">
       <span class="bus-tag a">CAN A</span> status 280 / 390 / 921 lus sur MCP2515 (comme le nag-killer).<br>
-      <span class="bus-tag b">CAN B</span> 1016 (SPR) + injection 1021 sur TWAI.<br>
-      <span class="bus-tag a">A</span><span class="bus-tag b">B</span> 1016 est aussi lu sur CAN A (traitement idempotent).
+      <span class="bus-tag b">CAN B</span> 1016 (SPR) + injection 1021 sur TWAI.
     </div>
     <div class="row">
       <div class="stat"><div class="k">280 (gear/ACA) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_280">—</div></div>
       <div class="stat"><div class="k">390 (DIF gear) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_390">—</div></div>
       <div class="stat"><div class="k">921 (AP status) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_921">—</div></div>
-      <div class="stat"><div class="k">1016 (SPR) <span class="bus-tag a">A</span><span class="bus-tag b">B</span></div><div class="v" id="sum_s_1016">—</div></div>
+      <div class="stat"><div class="k">1016 (SPR) <span class="bus-tag b">B</span></div><div class="v" id="sum_s_1016">—</div></div>
       <div class="stat"><div class="k">1021 mux1 rx <span class="bus-tag b">B</span></div><div class="v" id="sum_s_rx">—</div></div>
       <div class="stat"><div class="k">TX ok <span class="bus-tag b">B</span></div><div class="v ok" id="sum_s_ok">—</div></div>
       <div class="stat"><div class="k">TX fail <span class="bus-tag b">B</span></div><div class="v" id="sum_s_fail">—</div></div>
