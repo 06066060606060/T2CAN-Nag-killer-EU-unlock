@@ -1,6 +1,18 @@
 // T2CAN Unified - Dual CAN (MCP2515 + TWAI) for LilyGo T-2CAN
-// CAN A (MCP2515) -> Nag Echo  (ID 0x370)
-// CAN B (TWAI)    -> Summon Unlock (IDs 280, 390, 921, 1016, 1021)
+//
+// Standard model:
+//   CAN A (MCP2515) -> Nag Echo  (ID 0x370)
+//   CAN B (TWAI)    -> Summon Unlock (IDs 280, 390, 921, 1016, 1021)
+//
+// Model YL (set MODEL_YL to 1 below):
+//   CAN A (MCP2515) -> Nag Echo + summon STATUS frames 280 / 390 / 921 / 1016
+//   CAN B (TWAI)    -> Summon injection only, on 1021
+
+// ── Model selection ──
+// 1 = Model YL : summon status frames (280/390/921/1016) are read on CAN A
+//     (MCP2515), alongside the nag-killer. CAN B (TWAI) only carries 1021.
+// 0 = Standard : all summon frames (status + 1021) are on CAN B (TWAI).
+#define MODEL_YL 1
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -12,7 +24,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "T2CAN-V2.3"
+#define FW_VERSION "T2CAN-V2.3Beta"
 
 // T-2CAN board specific
 #include "pin_config.h"
@@ -360,12 +372,41 @@ static void nagUpdateSteering(const uint8_t* data, uint8_t dlc) {
   portEXIT_CRITICAL(&nagCtxMux);
 }
 
+// ── Forward declarations : summon status handlers (defined in CAN B section) ──
+// On Model YL these are also called from CAN A (MCP2515).
+static void handle280(const uint8_t *data);
+static void handle390(const uint8_t *data);
+static void handle921(const uint8_t *data);
+static void handle1016(const uint8_t *data, uint8_t dlc);
+
 // ── Nag process frame from MCP2515 ──
 
 static void nagProcessMcpFrame(const struct can_frame& rxf) {
   uint16_t id = rxf.can_id & 0x7FF;
   uint8_t dlc = rxf.can_dlc;
   if (dlc < 1) return;
+
+#if MODEL_YL
+  // Model YL : summon STATUS frames are read on CAN A (MCP2515).
+  // These update the summon gate state exactly like on CAN B; only the
+  // 1021 injection stays on CAN B (TWAI).
+  switch (id) {
+    case 280:
+      if (dlc >= 7) handle280(rxf.data);
+      break;
+    case 390:
+      if (dlc >= 8) handle390(rxf.data);
+      break;
+    case 921:
+      if (dlc >= 1) handle921(rxf.data);
+      break;
+    case 1016:
+      handle1016(rxf.data, dlc);
+      break;
+    default:
+      break;
+  }
+#endif
 
   uint16_t targetId, apStateId, steeringId;
   bool en;
@@ -1094,6 +1135,9 @@ static void canTaskTwai(void* arg) {
       lastCanFrameMs = millis();
 
       switch (f.identifier) {
+#if !MODEL_YL
+        // Standard model : summon STATUS frames are read on CAN B.
+        // On Model YL these are read on CAN A (MCP2515) instead.
         case 280:
           if (f.data_length_code >= 7) handle280(f.data);
           break;
@@ -1106,6 +1150,7 @@ static void canTaskTwai(void* arg) {
         case 1016:
           handle1016(f.data, f.data_length_code);
           break;
+#endif
         case 1021:
           if (f.data_length_code >= 8) {
             uint8_t mux = readMuxID(f.data);
