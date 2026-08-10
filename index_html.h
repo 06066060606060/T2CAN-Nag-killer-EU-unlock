@@ -338,11 +338,35 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
   }
   .switch input:checked + .slider { background: var(--ok); border-color: transparent; }
   .switch input:checked + .slider::before { transform: translateX(20px); background: #000; }
+  .model-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 2px 7px;
+  }
+  .iface-note.can-a { color: var(--accent); }
+  .iface-note.can-b { color: var(--ok); }
+  .bus-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-radius: 6px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .bus-tag.a { color: var(--accent); border: 1px solid var(--accent); }
+  .bus-tag.b { color: var(--ok); border: 1px solid var(--ok); }
 </style>
 </head>
 <body>
 <header>
-  <h1>T2CAN Nag-killer & EU unlock</h1>
+  <h1>T2CAN Nag-killer & EU unlock <span class="model-badge">Model YL</span></h1>
   <span class="pill" id="conn">connecting…</span>
 </header>
 <div class="tabs">
@@ -431,7 +455,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
 <!-- SUMMON UNLOCK TAB -->
 <main id="main-summon">
   <section class="panel">
-    <h2>Summon Unlock <span class="iface-note">CAN B — TWAI</span></h2>
+    <h2>Summon Unlock <span class="iface-note can-b">inject CAN B — TWAI (1021)</span></h2>
     <div class="stat full" style="min-height:auto;padding:16px 14px;">
       <div class="k">State</div>
       <div class="big-state off" id="sum_big">—</div>
@@ -475,15 +499,19 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
   </section>
 
   <section class="panel">
-    <h2>Frames CAN</h2>
+    <h2>Frames CAN <span class="iface-note">Model YL routing</span></h2>
+    <div class="desc" style="margin-top:0;margin-bottom:12px">
+      <span class="bus-tag a">CAN A</span> status 280 / 390 / 921 / 1016 lus sur MCP2515 (comme le nag-killer).<br>
+      <span class="bus-tag b">CAN B</span> injection 1021 sur TWAI.
+    </div>
     <div class="row">
-      <div class="stat"><div class="k">280 (gear/ACA)</div><div class="v" id="sum_s_280">—</div></div>
-      <div class="stat"><div class="k">390 (DIF gear)</div><div class="v" id="sum_s_390">—</div></div>
-      <div class="stat"><div class="k">921 (AP status)</div><div class="v" id="sum_s_921">—</div></div>
-      <div class="stat"><div class="k">1016 (SPR)</div><div class="v" id="sum_s_1016">—</div></div>
-      <div class="stat"><div class="k">1021 mux1 rx</div><div class="v" id="sum_s_rx">—</div></div>
-      <div class="stat"><div class="k">TX ok</div><div class="v ok" id="sum_s_ok">—</div></div>
-      <div class="stat"><div class="k">TX fail</div><div class="v" id="sum_s_fail">—</div></div>
+      <div class="stat"><div class="k">280 (gear/ACA) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_280">—</div></div>
+      <div class="stat"><div class="k">390 (DIF gear) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_390">—</div></div>
+      <div class="stat"><div class="k">921 (AP status) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_921">—</div></div>
+      <div class="stat"><div class="k">1016 (SPR) <span class="bus-tag a">A</span></div><div class="v" id="sum_s_1016">—</div></div>
+      <div class="stat"><div class="k">1021 mux1 rx <span class="bus-tag b">B</span></div><div class="v" id="sum_s_rx">—</div></div>
+      <div class="stat"><div class="k">TX ok <span class="bus-tag b">B</span></div><div class="v ok" id="sum_s_ok">—</div></div>
+      <div class="stat"><div class="k">TX fail <span class="bus-tag b">B</span></div><div class="v" id="sum_s_fail">—</div></div>
       <div class="stat"><div class="k">CAN B state</div><div class="v" id="sum_s_can">—</div></div>
       <div class="stat full"><div class="k">Uptime</div><div class="v" id="sum_s_up">—</div></div>
     </div>
@@ -497,8 +525,8 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
     <div class="row" style="margin-bottom:12px;">
       <div class="stat"><div class="k">Version</div><div class="v" id="fw_ver">—</div></div>
       <div class="stat"><div class="k">Free heap</div><div class="v" id="fw_free">—</div></div>
-      <div class="stat"><div class="k">MCP2515 (CAN A)</div><div class="v" id="fw_mcp">—</div></div>
-      <div class="stat"><div class="k">TWAI (CAN B)</div><div class="v" id="fw_twai">—</div></div>
+      <div class="stat"><div class="k">MCP2515 (CAN A) — nag + summon status</div><div class="v" id="fw_mcp">—</div></div>
+      <div class="stat"><div class="k">TWAI (CAN B) — summon inject 1021</div><div class="v" id="fw_twai">—</div></div>
       <div class="stat full"><div class="k">Boot count</div><div class="v" id="fw_boot">—</div></div>
     </div>
     <input type="file" id="otaFile" accept=".bin">
