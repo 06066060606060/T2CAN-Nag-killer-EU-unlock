@@ -342,7 +342,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
 </head>
 <body>
 <header>
-  <h1>T2CAN Nag-killer & EU unlock</h1>
+  <h1>T2CAN Unified <span id="hdr_ver" style="color:var(--muted);font-weight:600;font-size:13px;">—</span></h1>
   <span class="pill" id="conn">connecting…</span>
 </header>
 <div class="tabs">
@@ -454,8 +454,37 @@ const char INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
     </div>
     <div class="desc">
       Injects <b>UI_fsdStopsControlEnabled = 1</b> on <b>0x3FD</b> mux0 bit38.<br>
-	  and <b>UI_fsdContinueOnGreenWithCIPV = 1</b> on <b>0x3FD</b> mux0 bit39.<br>
       Off by default. Applied only while the injection gate is open.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>GTW Config Replay <span class="iface-note">CAN B — TWAI</span></h2>
+    <div class="toggle-row">
+      <span class="lbl">GTW_autopilot = SELF_DRIVING</span>
+      <label class="switch" style="margin:0">
+        <input type="checkbox" id="gtwsdToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="desc">
+      Injects <b>GTW_autopilot = SELF_DRIVING (3)</b> on <b>0x7FF</b> GTW_carConfig mux2 (bit42, len3).<br>
+      Off by default. Applied only while the injection gate is open.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>TLSSC Restore <span class="iface-note">CAN B — TWAI</span></h2>
+    <div class="toggle-row">
+      <span class="lbl">DAS_autopilotConfig = SELF_DRIVING</span>
+      <label class="switch" style="margin:0">
+        <input type="checkbox" id="tlrstToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="desc">
+      Rewrites <b>0x331</b> DAS_autopilotConfig (byte0 low 6 bits = 0x1B) so DAS_autopilot &amp; DAS_autopilotBase = SELF_DRIVING.<br>
+      Off by default. Applied only while the injection gate is open. May trigger an MCU reboot on the car.
     </div>
   </section>
 
@@ -788,6 +817,12 @@ async function fetchSummonStats() {
     const tg = $('tlsscToggle');
     if (tg && document.activeElement !== tg) tg.checked = !!s.tlssc;
 
+    const gg = $('gtwsdToggle');
+    if (gg && document.activeElement !== gg) gg.checked = !!s.gtwsd;
+
+    const gr = $('tlrstToggle');
+    if (gr && document.activeElement !== gr) gr.checked = !!s.tlrst;
+
     $('conn').textContent = 'connected';
     $('conn').className   = 'pill ok';
   } catch {
@@ -804,6 +839,16 @@ async function postSummon(url) {
 $('tlsscToggle').addEventListener('change', (e) => {
   postSummon(e.target.checked ? '/api/summon/tlssc-enable' : '/api/summon/tlssc-disable');
   showToast(e.target.checked ? 'TLSSC enabled' : 'TLSSC disabled');
+});
+
+$('gtwsdToggle').addEventListener('change', (e) => {
+  postSummon(e.target.checked ? '/api/summon/gtwsd-enable' : '/api/summon/gtwsd-disable');
+  showToast(e.target.checked ? 'GTW SELF_DRIVING enabled' : 'GTW SELF_DRIVING disabled');
+});
+
+$('tlrstToggle').addEventListener('change', (e) => {
+  postSummon(e.target.checked ? '/api/summon/tlrst-enable' : '/api/summon/tlrst-disable');
+  showToast(e.target.checked ? 'TLSSC Restore enabled' : 'TLSSC Restore disabled');
 });
 
 // ===== FIRMWARE / SYSTEM JS =====
