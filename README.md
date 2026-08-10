@@ -8,7 +8,7 @@
 
 ## What V2.3b Update Changes
 - Added 2 toggle in dashboard to enable TLSSC for banned car.
-- GTW Config Replay toggle is not needed
+- you don't need to activate GTW Config Replay...
 - 
 --------------------Update 2.2-------------------
 - bypass R79 EU restriction in AP
