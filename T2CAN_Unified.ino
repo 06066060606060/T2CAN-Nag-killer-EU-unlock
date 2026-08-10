@@ -12,7 +12,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "T2CAN-V2.3"
+#define FW_VERSION "T2CAN-V2.3b"
 
 // T-2CAN board specific
 #include "pin_config.h"
@@ -472,6 +472,8 @@ static volatile bool forceMode = false;
 static portMUX_TYPE stateMux = portMUX_INITIALIZER_UNLOCKED;
 static volatile bool summonEnabled = true;
 static volatile bool tlsscEnabled  = false;   // "Enable TLSSC" - off by default
+static volatile bool gtwSdEnabled  = false;   // "GTW SELF_DRIVING" - off by default
+static volatile bool tlsscRestoreEnabled = false;   // "TLSSC Restore" (0x331) - off by default
 static volatile bool gateAPActive  = false;
 static volatile bool gateParked    = true;
 static volatile bool gateSummoning = false;
@@ -638,8 +640,62 @@ static void injectTLSSC(const twai_message_t &src) {
     out.flags            = 0;
     for (int i = 0; i < 8; i++) out.data[i] = src.data[i];
     setBit(out.data, 38, true);   // UI_fsdStopsControlEnabled = 1
-    setBit(out.data, 39, true);    // UI_fsdContinueOnGreenWithCIPV = 1
-	
+
+    esp_err_t err = twai_transmit(&out, pdMS_TO_TICKS(2));
+    if (err == ESP_OK) sumTxOk++;
+    else               sumTxFail++;
+}
+
+// ── GTW config replay : 0x7FF (GTW_carConfig) mux2, GTW_autopilot -> SELF_DRIVING(3) ──
+// DBC: SG_ GTW_autopilot m2 : 42|3@1+  ; VAL_ 3 "SELF_DRIVING"
+static void injectGtwConfig(const twai_message_t &src) {
+    bool en, gate, fmode;
+    portENTER_CRITICAL(&stateMux);
+    en    = gtwSdEnabled;
+    gate  = injectionGateOpen();
+    fmode = forceMode;
+    portEXIT_CRITICAL(&stateMux);
+
+    if ((!en || !gate) && !fmode)
+        return;
+
+    twai_message_t out;
+    out.identifier       = src.identifier;
+    out.data_length_code = src.data_length_code;
+    out.flags            = 0;
+    for (int i = 0; i < 8; i++) out.data[i] = src.data[i];
+
+    // GTW_autopilot = 3 (SELF_DRIVING) : 3 bits little-endian a partir du bit 42
+    setBit(out.data, 42, true);    // bit0 of value -> 1
+    setBit(out.data, 43, true);    // bit1 of value -> 1
+    setBit(out.data, 44, false);   // bit2 of value -> 0   => 0b011 = 3
+
+    esp_err_t err = twai_transmit(&out, pdMS_TO_TICKS(2));
+    if (err == ESP_OK) sumTxOk++;
+    else               sumTxFail++;
+}
+
+// ── TLSSC Restore : 0x331 (DAS_autopilotConfig) DAS_autopilot & DAS_autopilotBase -> SELF_DRIVING(3) ──
+// RE (flipper-tesla-fsd): write byte[0] low 6 bits = 0x1B  => both 3-bit fields = 3 (SELF_DRIVING)
+static void injectTlsscRestore(const twai_message_t &src) {
+    bool en, gate, fmode;
+    portENTER_CRITICAL(&stateMux);
+    en    = tlsscRestoreEnabled;
+    gate  = injectionGateOpen();
+    fmode = forceMode;
+    portEXIT_CRITICAL(&stateMux);
+
+    if ((!en || !gate) && !fmode)
+        return;
+
+    twai_message_t out;
+    out.identifier       = src.identifier;
+    out.data_length_code = src.data_length_code;
+    out.flags            = 0;
+    for (int i = 0; i < 8; i++) out.data[i] = src.data[i];
+    // Preserve top 2 bits of byte0, force low 6 bits to 0x1B
+    out.data[0] = (uint8_t)((out.data[0] & 0xC0) | 0x1B);
+
     esp_err_t err = twai_transmit(&out, pdMS_TO_TICKS(2));
     if (err == ESP_OK) sumTxOk++;
     else               sumTxFail++;
@@ -649,6 +705,8 @@ static void summonCfgLoad() {
     prefs.begin("summon", true);
     summonEnabled = prefs.getBool("en", true);
     tlsscEnabled  = prefs.getBool("tlssc", false);
+    gtwSdEnabled  = prefs.getBool("gtwsd", false);
+    tlsscRestoreEnabled = prefs.getBool("tlrst", false);
     prefs.end();
 }
 
@@ -656,6 +714,8 @@ static void summonCfgSave() {
     prefs.begin("summon", false);
     prefs.putBool("en", summonEnabled);
     prefs.putBool("tlssc", tlsscEnabled);
+    prefs.putBool("gtwsd", gtwSdEnabled);
+    prefs.putBool("tlrst", tlsscRestoreEnabled);
     prefs.end();
 }
 
@@ -738,11 +798,13 @@ static String nagStatsToJson() {
 }
 
 static String summonStatsToJson() {
-    bool en, tlssc, ap, parked, summon, aca, spr, fmode;
+    bool en, tlssc, gtwsd, tlrst, ap, parked, summon, aca, spr, fmode;
     uint32_t rmx, tok, tfail, r280, r390, r921, r1016;
     portENTER_CRITICAL(&stateMux);
     en     = summonEnabled;
     tlssc  = tlsscEnabled;
+    gtwsd  = gtwSdEnabled;
+    tlrst  = tlsscRestoreEnabled;
     ap     = gateAPActive;
     parked = gateParked;
     summon = gateSummoning;
@@ -762,6 +824,8 @@ static String summonStatsToJson() {
     String s = "{";
     s += "\"enabled\":"  + String(en     ? "true" : "false");
     s += ",\"tlssc\":"   + String(tlssc  ? "true" : "false");
+    s += ",\"gtwsd\":"   + String(gtwsd  ? "true" : "false");
+    s += ",\"tlrst\":"   + String(tlrst  ? "true" : "false");
     s += ",\"gate\":"    + String(gate   ? "true" : "false");
     s += ",\"ap\":"      + String(ap     ? "true" : "false");
     s += ",\"parked\":"  + String(parked ? "true" : "false");
@@ -967,6 +1031,27 @@ static void httpSummonTlsscDisable() {
     server.send(200, "application/json", summonStatsToJson());
 }
 
+static void httpSummonGtwEnable() {
+    portENTER_CRITICAL(&stateMux); gtwSdEnabled = true;  portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+static void httpSummonGtwDisable() {
+    portENTER_CRITICAL(&stateMux); gtwSdEnabled = false; portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+static void httpSummonTlrstEnable() {
+    portENTER_CRITICAL(&stateMux); tlsscRestoreEnabled = true;  portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+static void httpSummonTlrstDisable() {
+    portENTER_CRITICAL(&stateMux); tlsscRestoreEnabled = false; portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+
 static void httpSummonForceMode() {
     portENTER_CRITICAL(&stateMux);
     forceMode = !forceMode;
@@ -1002,6 +1087,10 @@ static void webTask(void *arg) {
   server.on("/api/summon/disable",HTTP_POST, httpSummonDisable);
   server.on("/api/summon/tlssc-enable",  HTTP_POST, httpSummonTlsscEnable);
   server.on("/api/summon/tlssc-disable", HTTP_POST, httpSummonTlsscDisable);
+  server.on("/api/summon/gtwsd-enable",  HTTP_POST, httpSummonGtwEnable);
+  server.on("/api/summon/gtwsd-disable", HTTP_POST, httpSummonGtwDisable);
+  server.on("/api/summon/tlrst-enable",  HTTP_POST, httpSummonTlrstEnable);
+  server.on("/api/summon/tlrst-disable", HTTP_POST, httpSummonTlrstDisable);
   server.on("/api/summon/forcemode", HTTP_POST, httpSummonForceMode);
   server.on("/api/system/stats",  HTTP_GET,  httpSystemStats);
   server.on("/update", HTTP_POST, httpOtaFinish, httpOtaUpload);
@@ -1113,6 +1202,13 @@ static void canTaskTwai(void* arg) {
             else if (mux == 0) injectTLSSC(f);
           }
           break;
+        case 2047:   // 0x7FF GTW_carConfig - mux2 carries GTW_autopilot
+          if (f.data_length_code >= 8 && f.data[0] == 2)
+            injectGtwConfig(f);
+          break;
+        case 817:    // 0x331 DAS_autopilotConfig - TLSSC Restore
+          injectTlsscRestore(f);
+          break;
         default:
           break;
       }
@@ -1188,6 +1284,8 @@ void setup() {
     nagCfg.mode, nagCfg.targetId, nagCfg.torqueCount, nagCfg.enabled);
   Serial.printf("Summon enabled=%s\n", summonEnabled ? "true" : "false");
   Serial.printf("TLSSC enabled=%s (0x3FD mux0 bit38)\n", tlsscEnabled ? "true" : "false");
+  Serial.printf("GTW SELF_DRIVING enabled=%s (0x7FF mux2 GTW_autopilot=3)\n", gtwSdEnabled ? "true" : "false");
+  Serial.printf("TLSSC Restore enabled=%s (0x331 byte0 low6=0x1B)\n", tlsscRestoreEnabled ? "true" : "false");
 
   // Start web task first (Core 0)
   BaseType_t retWeb = xTaskCreatePinnedToCore(webTask, "web", 8192, nullptr, 1, nullptr, 0);
