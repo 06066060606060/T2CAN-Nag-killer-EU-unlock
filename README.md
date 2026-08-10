@@ -7,7 +7,7 @@
 ---
 
 ## distinctive feature of the Tesla Model YL (after March, 2026)
-Some CAN frames are not present on the chassis/Party BUS and must be retrieved from Body/VH BUS
+Some CAN frames are not present on the chassis & Party BUS and must be retrieved from Body/VH BUS
 
 | Flag            | Source         | Condition                | Model YL bus                           |  
 |-----------------|----------------|--------------------------|----------------------------------------|       
