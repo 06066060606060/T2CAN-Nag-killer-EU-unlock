@@ -1,5 +1,5 @@
 
-# Nag-killer & EU-Unlock V2.3 for LilyGO/T-2Can  
+# Nag-killer & EU-Unlock V2.3 Unified for LilyGO/T-2Can  
 
 > ⚠️ Research / educational firmware only.
 >
@@ -8,7 +8,7 @@
 
 ## What V2.3 Update Changes
 - Added a toggle in dashboard to enable TLSSC where it is not available.
-- (you need a valid subscription)
+- (you need a valid FSD subscription)
 
 --------------------Update 2.2-------------------
 - bypass R79 EU restriction in AP
