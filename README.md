@@ -27,6 +27,10 @@
 ## Branch for banned car
 - https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/ban
 
+## Compatibility
+- AP Injection doesn't work before 2026.20 
+- Tested on 2026.26.6.1  
+
 ## Hardware Target
 
 This fork was adapted for:
