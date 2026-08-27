@@ -22,7 +22,7 @@
 - OTA Update
 
 ## Branch for Model YL
-- https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/Model-YL
+- https://github.com/06066060606060/Advanced-eap-eu-unlock/tree/modelYL
 
 ## Branch for banned car
 - https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/ban
