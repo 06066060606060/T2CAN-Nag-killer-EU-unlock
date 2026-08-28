@@ -94,11 +94,11 @@ Lightning: ₿cakegrip53@phoenixwallet.me
 ## Credits
 
 - Inspired by `Ev Open Can Mod` https://github.com/ev-open-can-tools/ev-open-can-tools
-- Created by X₿mod.
+- Created by X₿mod edited by LP_YL
 - ESP32 TWAI driver by Espressif Systems
 - Automotive CAN research community
 
-<img width="471" height="760" alt="image" src="https://github.com/user-attachments/assets/b0663d9f-4e92-4fb0-9cbd-e9eb729d3dc5" />
+<img width="471" height="760" alt="image" src="https://github.com/user-attachments/assets/c7b60bb3-f9ca-4d69-95fc-50dcbf2893b7" />
 
 
 
