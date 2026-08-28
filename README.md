@@ -1,16 +1,21 @@
 
-# Nag-killer & EU-Unlock V2.3 Unified for LilyGO/T-2Can  
+# Nag-killer & EU-Unlock V2.5 Unified for LilyGO/T-2Can  
 
 > ⚠️ Research / educational firmware only.
 >
 > This project interacts with a Tesla vehicle CAN bus. It is intended for controlled bench testing, code review, and research environments only.It sends signals directly to the controller, not a physical command to the steering wheel. Do not use this on public roads or in any situation where unsafe behavior could put people or property at risk. You are responsible for your own testing, wiring, configuration, and local laws.
 ---
 
-## What V2.3 Update Changes
-- Added a toggle in dashboard to enable TLSSC where it is not available.
-- (you need a valid FSD subscription)
+## What V2.5 Update Changes
+- completly reworked code by LP_YL
+- New dashboard design by LP_YL
+- Summon TX Priority state machine
+- CAN A/B self-healing and Hard Reinitialize
+- Runtime and boot timing diagnostics
 
---------------------Update 2.2-------------------
+
+- Added a toggle in dashboard to enable TLSSC where it is not available.
+- (you need a valid EAP/FSD subscription)
 - bypass R79 EU restriction in AP
 - Expend summon to +/-  85m
 - expanded lateral acceleration limits
@@ -24,7 +29,7 @@
 ## Branch for Model YL
 - https://github.com/06066060606060/Advanced-eap-eu-unlock/tree/modelYL
 
-## Branch for banned car
+## Branch for banned car old version
 - https://github.com/06066060606060/T2CAN-Nag-killer-EU-unlock/tree/ban
 
 ## Compatibility
