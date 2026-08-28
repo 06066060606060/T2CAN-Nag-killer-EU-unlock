@@ -98,7 +98,7 @@ Lightning: ₿cakegrip53@phoenixwallet.me
 - ESP32 TWAI driver by Espressif Systems
 - Automotive CAN research community
 
-<img width="471" height="760" alt="image" src="https://github.com/user-attachments/assets/c7b60bb3-f9ca-4d69-95fc-50dcbf2893b7" />
+<img width="471" height="800" alt="image" src="https://github.com/user-attachments/assets/c7b60bb3-f9ca-4d69-95fc-50dcbf2893b7" />
 
 
 
