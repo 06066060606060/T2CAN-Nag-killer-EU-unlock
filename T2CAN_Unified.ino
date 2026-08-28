@@ -631,7 +631,7 @@ static void injectTLSSC(const twai_message_t &src) {
     fmode = forceMode;
     portEXIT_CRITICAL(&stateMux);
 
-    if ((!en || !gate) && !fmode)
+    if ((!en || !gate))
         return;
 
     twai_message_t out;
