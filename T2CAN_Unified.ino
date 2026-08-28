@@ -12,7 +12,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "T2CAN-V2.3b"
+#define FW_VERSION "T2CAN-V2.4"
 
 // T-2CAN board specific
 #include "pin_config.h"
