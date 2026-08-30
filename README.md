@@ -8,7 +8,7 @@
 
 ## What V2.5.2 Update Changes  
 - Added TLSSC Restore for banned car  
-- Added blindspot aggressiveness settings (madmax)
+- Added blindspot aggressiveness settings (madmax)  
 ----------------update 2.4-----------------------
 - completly reworked code by LP_YL
 - New dashboard design by LP_YL
