@@ -17,7 +17,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "V2.5.1"
+#define FW_VERSION "V2.5.2"
 
 // T-2CAN board specific
 #include "pin_config.h"
@@ -720,6 +720,12 @@ static char gateBlockReason[48] = "boot";
 #define DRIVER_ASSIST_ID  0x3F8
 
 static volatile uint8_t uiUlcBlindSpotConfig = 0;
+// Dashboard-selected ULC blind-spot configuration:
+// 0 = STANDARD, 1 = AGGRESSIVE, 2 = MAD_MAX.
+// Injection is only performed while AP/NOA is active.
+static volatile uint8_t ulcBlindSpotMode = 0;
+static volatile uint32_t ulcBlindSpotTxOk = 0;
+static volatile uint32_t ulcBlindSpotTxFail = 0;
 static volatile uint8_t uiUlcSpeedConfig = 0;
 
 // CAN B load-shedding / queue telemetry.
@@ -926,8 +932,56 @@ static esp_err_t twaiTransmitSummonPriority(const twai_message_t *msg) {
   return err;
 }
 
-// rev.07: 0x3F8 ULC configuration injection removed.
-// handle1016() remains RX-only for SPR detection and passive stock telemetry.
+// ── Lane Change / ULC Blind Spot Config : 0x3F8 ──
+// UI_ulcBlindSpotConfig is bits 52-53 (data[6] bits 4-5).
+// Dashboard modes map directly to the signal values:
+//   STANDARD   = 0
+//   AGGRESSIVE = 1
+//   MAD_MAX    = 2
+//
+// The incoming 0x3F8 frame is echoed only when AP/NOA is active and the
+// selected value differs from the stock value. This preserves all other bits.
+// The echoed frame is seen again by RX, but no second TX occurs because the
+// value then already matches the selected mode.
+static void injectUlcBlindSpotConfig(const twai_message_t &src) {
+    uint8_t desired;
+    bool ap;
+
+    portENTER_CRITICAL(&stateMux);
+    desired = ulcBlindSpotMode;
+    // AP/NOA only: 3=AUTOSTEER, 4=AUTOSTEER RESTRICTED, 5=NOA.
+    // FSD state 6 is intentionally excluded.
+    ap = gateAPActive && (dasAutopilotState4 == 3 ||
+                          dasAutopilotState4 == 4 ||
+                          dasAutopilotState4 == 5);
+    portEXIT_CRITICAL(&stateMux);
+
+    if (!ap || desired > 2 || src.data_length_code < 7)
+        return;
+
+    const uint8_t current = (src.data[6] >> 4) & 0x03;
+    if (current == desired)
+        return;
+
+    twai_message_t out;
+    out.identifier       = src.identifier;
+    out.data_length_code = src.data_length_code;
+    out.flags             = 0;
+    for (int i = 0; i < 8; i++) out.data[i] = src.data[i];
+
+    // Preserve data[6] bits 0-3 and 6-7; replace only bits 4-5.
+    out.data[6] = (uint8_t)((out.data[6] & 0xCF) | ((desired & 0x03) << 4));
+
+    // Lane Change is normal non-Summon traffic and must not block CAN-B RX.
+    if (!twaiNonSummonAdmissionOpen()) {
+        ulcBlindSpotTxFail++;
+        return;
+    }
+
+    esp_err_t err = twai_transmit(&out, 0);
+    if (err == ESP_OK) ulcBlindSpotTxOk++;
+    else               ulcBlindSpotTxFail++;
+}
 
 
 static inline bool isDASActive(uint8_t status) {
@@ -1185,11 +1239,9 @@ static void summonCfgLoad() {
     summonEnabled = prefs.getBool("en", true);
     tlsscEnabled        = prefs.getBool("tlssc", false);
     tlsscRestoreEnabled = prefs.getBool("tlrst", false);
+    ulcBlindSpotMode = prefs.getUChar("ulcbs", 0);
+    if (ulcBlindSpotMode > 2) ulcBlindSpotMode = 0;
 
-    // Compatibility cleanup: remove retired configuration keys from older revisions.
-    prefs.remove("tlrst");
-    prefs.remove("ulcbs");
-    prefs.remove("ulcsp");
     prefs.end();
 }
 
@@ -1198,6 +1250,7 @@ static void summonCfgSave() {
     prefs.putBool("en", summonEnabled);
     prefs.putBool("tlssc", tlsscEnabled);
     prefs.putBool("tlrst", tlsscRestoreEnabled);
+    prefs.putUChar("ulcbs", ulcBlindSpotMode);
     prefs.end();
 }
 
@@ -1319,6 +1372,12 @@ static String summonStatsToJson() {
     s += "\"enabled\":"  + String(en     ? "true" : "false");
     s += ",\"tlssc\":"        + String(tlssc        ? "true" : "false");
     s += ",\"tlsscRestore\":" + String(tlsscRestore ? "true" : "false");
+    s += ",\"ulcBlindSpotMode\":" + String((int)ulcBlindSpotMode);
+    s += ",\"ulcBlindSpotName\":\"" +
+         String(ulcBlindSpotMode == 1 ? "AGGRESSIVE" :
+                ulcBlindSpotMode == 2 ? "MAD_MAX" : "STANDARD") + "\"";
+    s += ",\"ulcTxOk\":" + String((unsigned long)ulcBlindSpotTxOk);
+    s += ",\"ulcTxFail\":" + String((unsigned long)ulcBlindSpotTxFail);
     s += ",\"gate\":"    + String(gate   ? "true" : "false");
     s += ",\"ap\":"      + String(ap     ? "true" : "false");
     const uint32_t dasAge = (dasLast == 0) ? 999999UL : (uint32_t)(millis() - dasLast);
@@ -1683,6 +1742,26 @@ static void httpSummonTlsscRestoreDisable() {
     server.send(200, "application/json", summonStatsToJson());
 }
 
+static void httpUlcBlindSpotSet() {
+    if (!server.hasArg("mode")) {
+        server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing mode\"}");
+        return;
+    }
+
+    int mode = server.arg("mode").toInt();
+    if (mode < 0 || mode > 2) {
+        server.send(400, "application/json", "{\"ok\":false,\"error\":\"mode must be 0, 1 or 2\"}");
+        return;
+    }
+
+    portENTER_CRITICAL(&stateMux);
+    ulcBlindSpotMode = (uint8_t)mode;
+    portEXIT_CRITICAL(&stateMux);
+
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+
 static void httpSummonForceMode() {
     portENTER_CRITICAL(&stateMux);
     forceMode = !forceMode;
@@ -1727,6 +1806,8 @@ static void resetRuntimeStats() {
   twaiSummonTxNormal = 0;
   twaiSummonTxStandby = 0;
   twaiSummonTxFull = 0;
+  ulcBlindSpotTxOk = 0;
+  ulcBlindSpotTxFail = 0;
 
   canHardReinitCount = 0;
   canHardReinitFailCount = 0;
@@ -1773,6 +1854,7 @@ static void webTask(void *arg) {
   server.on("/api/summon/tlssc-disable", HTTP_POST, httpSummonTlsscDisable);
   server.on("/api/summon/tlssc-restore-enable",  HTTP_POST, httpSummonTlsscRestoreEnable);
   server.on("/api/summon/tlssc-restore-disable", HTTP_POST, httpSummonTlsscRestoreDisable);
+  server.on("/api/ulc/blindspot", HTTP_POST, httpUlcBlindSpotSet);
   server.on("/api/summon/forcemode", HTTP_POST, httpSummonForceMode);
   server.on("/api/system/stats",  HTTP_GET,  httpSystemStats);
   server.on("/api/system/boot-capture.csv", HTTP_GET, httpBootCaptureCsv);
@@ -1905,8 +1987,9 @@ static void canTaskTwai(void* arg) {
           break;
         // 1016 (SPR) is read on CAN B.
         case DRIVER_ASSIST_ID:
-          // 0x3F8 is RX-only: SPR detection + passive stock ULC telemetry.
+          // 0x3F8 carries SPR + UI_ulcBlindSpotConfig.
           handle1016(f.data, f.data_length_code);
+          injectUlcBlindSpotConfig(f);
           break;
         case 817: // 0x331 DAS_autopilotConfig
           if (f.data_length_code >= 1)
