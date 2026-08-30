@@ -17,7 +17,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "V2.5"
+#define FW_VERSION "V2.5.1"
 
 // T-2CAN board specific
 #include "pin_config.h"
@@ -672,7 +672,8 @@ static inline uint8_t readDASState4(const uint8_t *data) {
 static volatile bool forceMode = false;
 static portMUX_TYPE stateMux = portMUX_INITIALIZER_UNLOCKED;
 static volatile bool summonEnabled = true;
-static volatile bool tlsscEnabled  = false;   // "Enable TLSSC" - off by default
+static volatile bool tlsscEnabled        = false;   // "Enable TLSSC" - off by default
+static volatile bool tlsscRestoreEnabled = false;   // "TLSSC Restore" - off by default
 static volatile bool gateAPActive  = false;
 static volatile uint8_t dasAutopilotState4 = 0xFF; // low nibble of CAN-B 0x399 byte0, telemetry only
 static volatile uint32_t lastDASStatusMillis = 0;  // last valid CAN-B 0x399 RX, telemetry only
@@ -1140,10 +1141,50 @@ static void injectTLSSC(const twai_message_t &src) {
     else               sumTxFail++;
 }
 
+// ── TLSSC Restore : 0x331 (DAS_autopilotConfig) ──
+// DAS_autopilot & DAS_autopilotBase -> SELF_DRIVING(3)
+// Force byte0 low 6 bits to 0x1B while preserving the top 2 bits.
+// Restore is enabled by its own dashboard switch and is authorized when
+// Autopilot is active OR the Summon switch is enabled.
+static void doInjectTlsscRestore(const twai_message_t &src) {
+    bool en, ap, summon;
+    portENTER_CRITICAL(&stateMux);
+    en     = tlsscRestoreEnabled;
+    ap     = gateAPActive;
+    summon = summonEnabled;
+    portEXIT_CRITICAL(&stateMux);
+
+    if (!en || (!ap && !summon) || src.data_length_code < 1)
+        return;
+
+    twai_message_t out;
+    out.identifier       = src.identifier;
+    out.data_length_code = src.data_length_code;
+    out.flags            = 0;
+    for (int i = 0; i < 8; i++) out.data[i] = src.data[i];
+
+    const uint8_t restored = (uint8_t)((out.data[0] & 0xC0) | 0x1B);
+    if (out.data[0] == restored)
+        return;
+
+    out.data[0] = restored;
+
+    // Keep Restore on the normal non-Summon TX path so it cannot block CAN B RX.
+    if (!twaiNonSummonAdmissionOpen()) {
+        sumTxFail++;
+        return;
+    }
+
+    esp_err_t err = twai_transmit(&out, 0);
+    if (err == ESP_OK) sumTxOk++;
+    else               sumTxFail++;
+}
+
 static void summonCfgLoad() {
     prefs.begin("summon", false);
     summonEnabled = prefs.getBool("en", true);
-    tlsscEnabled  = prefs.getBool("tlssc", false);
+    tlsscEnabled        = prefs.getBool("tlssc", false);
+    tlsscRestoreEnabled = prefs.getBool("tlrst", false);
 
     // Compatibility cleanup: remove retired configuration keys from older revisions.
     prefs.remove("tlrst");
@@ -1156,6 +1197,7 @@ static void summonCfgSave() {
     prefs.begin("summon", false);
     prefs.putBool("en", summonEnabled);
     prefs.putBool("tlssc", tlsscEnabled);
+    prefs.putBool("tlrst", tlsscRestoreEnabled);
     prefs.end();
 }
 
@@ -1239,14 +1281,15 @@ static String nagStatsToJson() {
 }
 
 static String summonStatsToJson() {
-    bool en, tlssc, ap, parked, summon, aca, spr, fmode, priorityFreshParked;
+    bool en, tlssc, tlsscRestore, ap, parked, summon, aca, spr, fmode, priorityFreshParked;
     uint8_t priorityState, dasState;
     uint32_t prioritySince, priorityTransitions, priorityFullEnter, priorityFullExit, priorityFullInactiveSince, dasLast;
     uint32_t rmx, tok, tfail, r280, r390, r921, r1016;
     portENTER_CRITICAL(&stateMux);
     en     = summonEnabled;
-    tlssc  = tlsscEnabled;
-    ap     = gateAPActive;
+    tlssc        = tlsscEnabled;
+    tlsscRestore = tlsscRestoreEnabled;
+    ap           = gateAPActive;
     parked = gateParked;
     summon = gateSummoning;
     aca    = lastAca;
@@ -1274,7 +1317,8 @@ static String summonStatsToJson() {
     const bool twaiStatusOk = (twai_get_status_info(&st) == ESP_OK);
     String s = "{";
     s += "\"enabled\":"  + String(en     ? "true" : "false");
-    s += ",\"tlssc\":"   + String(tlssc  ? "true" : "false");
+    s += ",\"tlssc\":"        + String(tlssc        ? "true" : "false");
+    s += ",\"tlsscRestore\":" + String(tlsscRestore ? "true" : "false");
     s += ",\"gate\":"    + String(gate   ? "true" : "false");
     s += ",\"ap\":"      + String(ap     ? "true" : "false");
     const uint32_t dasAge = (dasLast == 0) ? 999999UL : (uint32_t)(millis() - dasLast);
@@ -1628,6 +1672,16 @@ static void httpSummonTlsscDisable() {
     summonCfgSave();
     server.send(200, "application/json", summonStatsToJson());
 }
+static void httpSummonTlsscRestoreEnable() {
+    portENTER_CRITICAL(&stateMux); tlsscRestoreEnabled = true; portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
+static void httpSummonTlsscRestoreDisable() {
+    portENTER_CRITICAL(&stateMux); tlsscRestoreEnabled = false; portEXIT_CRITICAL(&stateMux);
+    summonCfgSave();
+    server.send(200, "application/json", summonStatsToJson());
+}
 
 static void httpSummonForceMode() {
     portENTER_CRITICAL(&stateMux);
@@ -1717,6 +1771,8 @@ static void webTask(void *arg) {
   server.on("/api/summon/disable",HTTP_POST, httpSummonDisable);
   server.on("/api/summon/tlssc-enable",  HTTP_POST, httpSummonTlsscEnable);
   server.on("/api/summon/tlssc-disable", HTTP_POST, httpSummonTlsscDisable);
+  server.on("/api/summon/tlssc-restore-enable",  HTTP_POST, httpSummonTlsscRestoreEnable);
+  server.on("/api/summon/tlssc-restore-disable", HTTP_POST, httpSummonTlsscRestoreDisable);
   server.on("/api/summon/forcemode", HTTP_POST, httpSummonForceMode);
   server.on("/api/system/stats",  HTTP_GET,  httpSystemStats);
   server.on("/api/system/boot-capture.csv", HTTP_GET, httpBootCaptureCsv);
@@ -1851,6 +1907,10 @@ static void canTaskTwai(void* arg) {
         case DRIVER_ASSIST_ID:
           // 0x3F8 is RX-only: SPR detection + passive stock ULC telemetry.
           handle1016(f.data, f.data_length_code);
+          break;
+        case 817: // 0x331 DAS_autopilotConfig
+          if (f.data_length_code >= 1)
+            doInjectTlsscRestore(f);
           break;
         case 1021:
           if (f.data_length_code >= 8) {
@@ -2304,6 +2364,7 @@ void setup() {
     nagCfg.mode, nagCfg.targetId, nagCfg.torqueCount, nagCfg.enabled);
   Serial.printf("Summon enabled=%s\n", summonEnabled ? "true" : "false");
   Serial.printf("TLSSC enabled=%s (0x3FD mux0 bit38)\n", tlsscEnabled ? "true" : "false");
+  Serial.printf("TLSSC Restore enabled=%s (0x331 DAS_autopilotConfig)\n", tlsscRestoreEnabled ? "true" : "false");
 
   // rev.14: board power-on is treated as the wake signal for RX.
   // Existing per-feature validity gates still control every injection/TX path.
