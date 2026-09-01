@@ -10,6 +10,7 @@
 > You are responsible for your own testing, wiring, configuration, and compliance with local laws.
 
 ---
+## ⚠️ Do not activate TLSSC if you do not have an FSD subscription. it seems there is a high risk of being banned. 
 
 ## 📋 What's New
 
@@ -29,7 +30,7 @@
 ### V2.3
 
 - Added a dashboard toggle to enable **TLSSC** where it is not available.
-  - A valid **EAP/FSD subscription** is required.
+  - A valid **FSD subscription** is required.
 - Bypass **R79 EU restriction** in AP.
 - Expanded Summon range to **±85 m**.
 - Expanded lateral acceleration limits.
