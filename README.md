@@ -11,7 +11,7 @@
 
 ---
 ## ⚠️ Do not activate TLSSC if you do not have an FSD subscription.  
-there is a high risk of being banned. 
+## there is a high risk of being banned. 
 
 ## 📋 What's New
 
