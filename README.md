@@ -10,7 +10,8 @@
 > You are responsible for your own testing, wiring, configuration, and compliance with local laws.
 
 ---
-## ⚠️ Do not activate TLSSC if you do not have an FSD subscription. it seems there is a high risk of being banned. 
+## ⚠️ Do not activate TLSSC if you do not have an FSD subscription.  
+there is a high risk of being banned. 
 
 ## 📋 What's New
 
