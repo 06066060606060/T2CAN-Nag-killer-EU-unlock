@@ -10,13 +10,13 @@
 > You are responsible for your own testing, wiring, configuration, and compliance with local laws.
 
 ---
-### ⚠️ Do not activate TLSSC if you do not have an FSD subscription.  high risk of being banned. 
+### ⚠️ DO NOT APPLY TLSSC RESTORE ON NON BANNED CAR (you will be banned instantly)
 
 ## 📋 What's New
 
 ### V2.5.2
 
-- Added **TLSSC Restore** for banned cars.   (DO NOT APPLY ON NON BANNED CAR)
+- Added **TLSSC Restore** for banned cars.  
 - Added **Blindspot aggressiveness** settings (`MadMax`).
 
 ### V2.4
