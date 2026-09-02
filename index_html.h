@@ -16,6 +16,13 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
 .gatecard{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:var(--shadow)}.gatehead{display:flex;align-items:center;justify-content:space-between;gap:12px}.gatetitle{font-size:13px;font-weight:590}.gatepill{border:1px solid var(--green);color:var(--green);border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700;white-space:nowrap}.gatepill.closed{border-color:var(--muted);color:var(--muted)}.gategrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:12px}.gateitem{background:var(--card);padding:11px 5px;text-align:center}.gk{font-size:8px;color:var(--muted);font-weight:650;letter-spacing:.04em}.gv{font-size:11px;margin-top:4px;font-weight:650;white-space:nowrap}
 .canline{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}.can{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow)}.canTop{display:flex;align-items:center;justify-content:space-between}.canName{font-size:12px;font-weight:590}.badge{font-size:9px;color:var(--green);font-weight:700}.canVal{font-size:22px;margin-top:10px;font-weight:520;letter-spacing:-.04em}.canSub{font-size:9px;color:var(--muted);margin-top:4px}
 .drawer{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}details+details{border-top:1px solid var(--line)}summary{list-style:none;cursor:pointer;padding:17px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:570}summary::-webkit-details-marker{display:none}.arrow{font-size:15px;color:var(--muted);transition:.18s}details[open] .arrow{transform:rotate(90deg)}.body{padding:0 16px 15px}.r{display:flex;justify-content:space-between;gap:16px;padding:10px 0;font-size:11px;border-top:1px solid var(--line)}.rk{color:var(--muted)}.rv{text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.subhead{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.08em;margin:13px 0 7px}.controlgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:6px}.btn{border:0;border-radius:13px;padding:12px;background:var(--bg);color:var(--ink);font-size:11px;font-weight:600}.btn.primary{background:var(--ink);color:var(--bg)}.btn.danger{color:var(--red)}.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{background:var(--bg);border-radius:13px;padding:9px 10px}.field label{display:block;font-size:8px;color:var(--muted);font-weight:650;margin-bottom:5px}.field input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:13px}.field.full{grid-column:1/-1}.torqueRows{display:grid;gap:5px}.torqueRow{display:grid;grid-template-columns:28px 1fr 1fr 60px;gap:6px;align-items:center}.torqueRow input{width:100%;border:0;border-radius:10px;background:var(--bg);color:var(--ink);padding:8px;font-size:11px}.torqueRow span{font-size:10px;text-align:right}.ota{margin-top:8px}.ota input[type=file]{width:100%;font-size:10px;color:var(--muted);margin:6px 0 8px}.progress{height:4px;background:var(--line);border-radius:99px;overflow:hidden;display:none}.progress.show{display:block}.progress>i{display:block;height:100%;width:0;background:var(--green)}.otaMsg{font-size:9px;color:var(--muted);margin-top:7px}.linkbtn{display:flex;align-items:center;justify-content:center;text-decoration:none}
+.confirmOverlay{position:fixed;inset:0;background:rgba(0,0,0,.52);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000}
+.confirmOverlay.show{display:flex}
+.confirmBox{width:min(100%,390px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 16px 50px rgba(0,0,0,.25)}
+.confirmTitle{font-size:16px;font-weight:700;margin-bottom:10px}
+.confirmText{font-size:13px;line-height:1.45;color:var(--red);font-weight:650}
+.confirmActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:20px}
+.confirmActions .btn{padding:12px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#111;color:#fff;padding:10px 14px;border-radius:999px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;z-index:20}.toast.show{opacity:.94;transform:translate(-50%,0)}.bottom{text-align:center;margin-top:18px;font-size:9px;color:var(--muted)}
 @media(max-width:380px){.mode{font-size:40px}.mode.compact{font-size:27px}.qrow{padding:0 13px}.qs{max-width:140px;overflow:hidden;text-overflow:ellipsis}.prio{font-size:8.5px}.gategrid{grid-template-columns:1fr 1fr}.canline{grid-template-columns:1fr}}
 </style>
@@ -100,7 +107,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
       <summary><span>TLSSC Restore</span><span class="arrow">›</span></summary>
       <div class="body">
         <div class="qrow" style="padding:0;min-height:52px">
-          <div class="ql"><div class="ico">R</div><div><div class="qt">TLSSC Restore</div><div class="qs">For banned car only</div></div></div>
+          <div class="ql"><div class="ico">R</div><div><div class="qt">TLSSC Restore For banned car only</div><div class="qs" style="color:red;">Do not use on non banned car you will be banned instantly.</div></div></div>
           <label class="toggle"><input id="tlsscRestoreToggle" type="checkbox"><span class="track"></span></label>
         </div>
       </div>
@@ -140,6 +147,16 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
   </section>
   <div class="bottom">TESLA UNLOCK · LILYGO T-2CAN</div>
 </div>
+<div class="confirmOverlay" id="tlsscConfirm" role="dialog" aria-modal="true" aria-labelledby="tlsscConfirmTitle">
+  <div class="confirmBox">
+    <div class="confirmTitle" id="tlsscConfirmTitle">TLSSC Restore Warning</div>
+    <div class="confirmText">Do not use on non banned car you will be banned instantly</div>
+    <div class="confirmActions">
+      <button class="btn" id="tlsscCancel">Cancel</button>
+      <button class="btn primary" id="tlsscConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);let nagCfg=null,otaUploading=false,lastOk=0,lastNag=null,lastSum=null,lastSys=null;
@@ -159,7 +176,40 @@ async function fetchSys(){try{const s=lastSys=await jget('/api/system/stats');$(
 $('nagToggle').onchange=async e=>{if(!nagCfg)return;try{nagCfg=await (await fetch('/api/nag/update?enabled='+(e.target.checked?'1':'0'),{method:'POST'})).json();ok();renderNagCfg();toast(e.target.checked?'Nag enabled':'Nag disabled')}catch(x){}};
 $('summonToggle').onchange=async e=>{try{await post(e.target.checked?'/api/summon/enable':'/api/summon/disable');fetchSum()}catch(x){}};
 $('tlsscToggle').onchange=async e=>{try{await post(e.target.checked?'/api/summon/tlssc-enable':'/api/summon/tlssc-disable');fetchSum()}catch(x){}};
-$('tlsscRestoreToggle').onchange=async e=>{try{await post(e.target.checked?'/api/summon/tlssc-restore-enable':'/api/summon/tlssc-restore-disable');fetchSum()}catch(x){}};
+const tlsscConfirm=$('tlsscConfirm');
+const tlsscCancel=$('tlsscCancel');
+const tlsscConfirmBtn=$('tlsscConfirmBtn');
+
+function closeTlsscConfirm(){tlsscConfirm.classList.remove('show')}
+
+async function enableTlsscRestore(){
+  try{
+    await post('/api/summon/tlssc-restore-enable');
+    await fetchSum();
+    toast('TLSSC Restore enabled');
+  }catch(e){
+    toast('TLSSC Restore update failed');
+  }
+}
+
+tlsscCancel.onclick=()=>{ $('tlsscRestoreToggle').checked=false; closeTlsscConfirm(); };
+tlsscConfirmBtn.onclick=async()=>{ closeTlsscConfirm(); $('tlsscRestoreToggle').checked=true; await enableTlsscRestore(); };
+tlsscConfirm.onclick=e=>{if(e.target===tlsscConfirm){$('tlsscRestoreToggle').checked=false;closeTlsscConfirm()}};
+
+$('tlsscRestoreToggle').onchange=async e=>{
+  if(e.target.checked){
+    e.target.checked=false;
+    tlsscConfirm.classList.add('show');
+  }else{
+    try{
+      await post('/api/summon/tlssc-restore-disable');
+      await fetchSum();
+      toast('TLSSC Restore disabled');
+    }catch(x){
+      toast('TLSSC Restore update failed');
+    }
+  }
+};
 $('blindspotStandard').onclick=()=>setBlindspot(0);$('blindspotAggressive').onclick=()=>setBlindspot(1);$('blindspotMadMax').onclick=()=>setBlindspot(2);
 async function setBlindspot(mode){try{await (await fetch('/api/ulc/blindspot?mode='+mode,{method:'POST'})).json();ok();fetchSum();toast(mode===0?'Blindspot STANDARD':mode===1?'Blindspot AGGRESSIVE':'Blindspot MAD_MAX')}catch(e){toast('Blindspot apply failed')}};
 $('modeA').onclick=()=>setMode(0);$('modeB').onclick=()=>setMode(1);async function setMode(m){try{nagCfg=await (await fetch('/api/nag/mode?m='+m,{method:'POST'})).json();ok();renderNagCfg();toast(m?'Burst / Pause':'Mode A')}catch(e){}}
