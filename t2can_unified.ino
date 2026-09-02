@@ -4,8 +4,7 @@
 //   CAN A (MCP2515) -> Party CAN: NAG source/target 0x370
 //   CAN B (TWAI)    -> Chassis CAN: 280 / 390 / 921 (0x399) / 1016 / 1021
 //
-// This V2.0b build is Standard Model Y only. YL-specific split-bus code and
-// SCCM turn-signal injection code are not included.
+
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -17,7 +16,7 @@
 #include "driver/twai.h"
 #include "index_html.h"
 
-#define FW_VERSION "V2.5.2"
+#define FW_VERSION "V2.6.0"
 
 // T-2CAN board specific
 #include "pin_config.h"
@@ -708,6 +707,14 @@ static constexpr uint32_t SUMMON_PRIORITY_PARK_FRESH_MS = 3000;
 static constexpr uint32_t SUMMON_PRIORITY_FULL_EXIT_GRACE_MS = 1500;
 
 static volatile uint32_t sumRxMux1   = 0;
+
+// Latest real CAN-B 0x3FD (1021) mux1 frame used as the periodic
+// Summon transport template.
+static volatile bool summon3fdMux1Valid = false;
+static volatile uint8_t summon3fdMux1Data[8] = {0};
+static volatile uint32_t summonPeriodicTxMs = 0;
+#define SUMMON_PERIODIC_TX_MS 500
+
 static volatile uint32_t sumTxOk     = 0;
 static volatile uint32_t sumTxFail   = 0;
 static volatile uint32_t sumRx280    = 0;
@@ -1159,6 +1166,54 @@ static void injectSummon(const twai_message_t &src) {
     esp_err_t err = twaiTransmitSummonPriority(&out);
     if (err == ESP_OK) sumTxOk++;
     else               sumTxFail++;
+}
+
+// ── Summon periodic 0x3FD mux1 re-transmission ───────────────────
+// During an active Summoning session, re-send the latest real mux1
+// frame every 1 second. All bytes are preserved except:
+//   bit 19 -> 0
+//   bit 47 -> 1
+static void summonPeriodicTick() {
+  bool en, summoning, valid;
+  uint8_t data[8];
+
+  portENTER_CRITICAL(&stateMux);
+  en        = summonEnabled;
+  summoning = gateSummoning;
+  valid     = summon3fdMux1Valid;
+  if (valid)
+    memcpy(data, (const void*)summon3fdMux1Data, 8);
+  portEXIT_CRITICAL(&stateMux);
+
+  if (!en || !summoning) {
+    summonPeriodicTxMs = 0;
+    return;
+  }
+
+  if (!valid)
+    return;
+
+  const uint32_t now = (uint32_t)millis();
+  if (summonPeriodicTxMs != 0 &&
+      (uint32_t)(now - summonPeriodicTxMs) < SUMMON_PERIODIC_TX_MS)
+    return;
+
+  twai_message_t out;
+  out.identifier       = 1021;  // 0x3FD
+  out.data_length_code = 8;
+  out.flags             = 0;
+  memcpy(out.data, data, 8);
+
+  setBit(out.data, 19, false);
+  setBit(out.data, 47, true);
+
+  esp_err_t err = twaiTransmitSummonPriority(&out);
+  if (err == ESP_OK) {
+    sumTxOk++;
+    summonPeriodicTxMs = now;
+  } else {
+    sumTxFail++;
+  }
 }
 
 // ── TLSSC : 0x3FD mux0 bit38/39 ──
@@ -1782,6 +1837,9 @@ static void resetRuntimeStats() {
 
   portENTER_CRITICAL(&stateMux);
   sumRxMux1 = 0;
+  summonPeriodicTxMs = 0;
+  summon3fdMux1Valid = false;
+  memset((void*)summon3fdMux1Data, 0, 8);
   sumTxOk = 0;
   sumTxFail = 0;
   sumRx280 = 0;
@@ -1998,8 +2056,16 @@ static void canTaskTwai(void* arg) {
         case 1021:
           if (f.data_length_code >= 8) {
             uint8_t mux = readMuxID(f.data);
-            if (mux == 1)      injectSummon(f);
-            else if (mux == 0) injectTLSSC(f);
+            if (mux == 1) {
+              portENTER_CRITICAL(&stateMux);
+              memcpy((void*)summon3fdMux1Data, f.data, 8);
+              summon3fdMux1Valid = true;
+              portEXIT_CRITICAL(&stateMux);
+
+              injectSummon(f);
+            } else if (mux == 0) {
+              injectTLSSC(f);
+            }
           }
           break;
 
@@ -2011,6 +2077,10 @@ static void canTaskTwai(void* arg) {
     // Expire PARK_STANDBY if the confirmed gear source becomes stale.
     // SUMMON_FULL uses a short dropout grace before leaving the active session.
     refreshSummonPriorityState();
+
+    // Periodic 0x3FD mux1 re-transmission while Summoning is active.
+    summonPeriodicTick();
+
     twaiReadQueueStatus();
 
     // TWAI status / recovery. Recovery ends in STOPPED, so explicitly
