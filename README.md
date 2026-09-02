@@ -1,4 +1,4 @@
-# Nag-killer & EU-Unlock V2.5.2
+# Nag-killer & EU-Unlock V2.6.0
 ### Unified firmware for LilyGO / T-2Can
 
 > ⚠️ **Research / educational firmware only**
@@ -14,31 +14,25 @@
 
 ## 📋 What's New
 
-### V2.5.2
+### V2.6.0
+- Includes an updated summon logic for much better stability.(500ms echo)
 
-- Added **TLSSC Restore** for banned cars.  
-- Added **Blindspot aggressiveness** settings (`MadMax`).
+## NAG-Killer
 
-### V2.4
+eliminate the "hands on the wheel" prompt while using Autopilot/FSD.
 
-- Completely reworked code by **LP_YL**.
-- New dashboard design by **LP_YL**.
-- Summon TX Priority state machine.
-- CAN A/B self-healing and hard reinitialization.
-- Runtime and boot timing diagnostics.
+## 🇪🇺 EU Unlock
 
-### V2.3
-
-- Added a dashboard toggle to enable **TLSSC** where it is not available.
-  - A valid **FSD subscription** is required.
 - Bypass **R79 EU restriction** in AP.
-- Expanded Summon range to **±85 m**.
+- Expand Summon range to **±85 m**.
 - Expanded lateral acceleration limits.
 - Lane changes near forks are not disabled (EAP).
 - Instantaneous lane change on blinker (EAP).
 - No lane-change timeout once initiated (EAP).
 - Automatically takes forks and exits (EAP).
-- Continue on Green with Car in Front (EAP).
+- Toggle to activate **TLSSC** where it is not available.
+  - A valid **EAP/FSD subscription** is required.
+- Continue on Green with Car in Front (**TLSSC**).
 - OTA update support.
 
 ---
