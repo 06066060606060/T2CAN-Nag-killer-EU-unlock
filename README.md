@@ -16,6 +16,7 @@
 
 ### V2.6.0
 - Includes an updated summon logic for much better stability.(500ms echo)
+- ulcBlindSpot can be set to agressive, (it's the default setting by Tesla)
 
 ## NAG-Killer
 
