@@ -20,7 +20,7 @@
 
 ## NAG-Killer
 
-eliminate the "hands on the wheel" prompt while using Autopilot/FSD.
+- eliminate the "hands on the wheel" prompt while using Autopilot/FSD.
 
 ## 🇪🇺 EU Unlock
 
@@ -35,6 +35,7 @@ eliminate the "hands on the wheel" prompt while using Autopilot/FSD.
   - A valid **EAP/FSD subscription** is required.
 - Continue on Green with Car in Front (**TLSSC**).
 - OTA update support.
+- ulcBlindSpot can be set to agressive, (it's the default setting by Tesla)
 
 ---
 
