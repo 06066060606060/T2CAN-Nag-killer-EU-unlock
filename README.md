@@ -1,3 +1,5 @@
+⚠️ Firmware replaced by https://github.com/06066060606060/t2can-universal-unlock
+
 # Nag-killer & EU-Unlock V2.6.0
 ### Unified firmware for LilyGO / T-2Can
 
@@ -16,7 +18,6 @@
 
 ### V2.6.0
 - Includes an updated summon logic for much better stability.(500ms echo)
-
 
 ## NAG-Killer
 
