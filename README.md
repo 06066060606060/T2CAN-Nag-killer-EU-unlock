@@ -1,4 +1,6 @@
-⚠️ Firmware replaced by https://github.com/06066060606060/t2can-universal-unlock
+⚠️ **Firmware replaced by**
+# t2can-universal-unlock V3
+https://github.com/06066060606060/t2can-universal-unlock
 
 # Nag-killer & EU-Unlock V2.6.0
 ### Unified firmware for LilyGO / T-2Can
