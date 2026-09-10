@@ -1,4 +1,4 @@
-⚠️ **Firmware replaced by**
+⚠️ # Firmware replaced by:
 # t2can-universal-unlock V3
 https://github.com/06066060606060/t2can-universal-unlock
 
